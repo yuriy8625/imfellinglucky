@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 
 /**
  * Registration request
@@ -29,7 +30,32 @@ class RegistrationRequest extends FormRequest
     {
         return [
             'username' => ['required', 'string', 'min:2'],
-            'phone_number' => ['required', 'string', 'min:10'],
+            'phone_number' => ['required', 'string', 'min:10', 'regex:/^\+\d{12}$/'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $username = $this->username;
+            $phone = $this->phone_number;
+
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $user = User::where('username', $username)
+                ->orWhere('phone_number', $phone)
+                ->first();
+
+            if ($user && ($user->username !== $username || $user->phone_number !== $phone)) {
+                $message = 'Username and phone number must belong to the same user.';
+                $validator->errors()->add('username', $message);
+                return;
+            }
+        });
     }
 }

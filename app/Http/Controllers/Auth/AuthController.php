@@ -37,6 +37,6 @@ class AuthController extends Controller
     {
        $this->authService->deactivateToken($user);
 
-        return view('welcome');
+        return redirect()->route('welcome');
     }
 }
